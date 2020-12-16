@@ -1,9 +1,6 @@
 { lib }:
 # This function returns a flake outputs-compatible schema.
-{
-  # pass an instance of self
-  self
-, # pass an instance of the nixpkgs flake
+{ # pass an instance of the nixpkgs flake
   nixpkgs
 , # we assume that the name maps to the project name, and also that the
   # overlay has an attribute with the `name` prefix that contains all of the
@@ -12,13 +9,15 @@
 , # nixpkgs config
   config ? { }
 , # pass either a function or a file
-  overlay ? null
+  overlay ? (_:_: {})
 , # use this to load other flakes overlays to supplement nixpkgs
-  preOverlays ? [ ]
+  overlays ? [ ]
 , # maps to the devShell output. Pass in a shell.nix file or function.
   shell ? null
 , # pass the list of supported systems
-  systems ? [ "x86_64-linux" ]
+  systems ? lib.defaultSystems
+, #
+  packages ? { pkgs }: pkgs.${name} or { }
 }:
 let
   loadOverlay = obj:
@@ -35,9 +34,19 @@ let
       obj
   ;
 
-  overlays = preOverlays ++ (loadOverlay overlay);
+  overlay' = maybeImport overlay;
+  overlays' = map maybeImport overlays;
+  shell' = maybeImport shell;
+  packages' = maybeImport packages;
+in let
+  inherit (nixpkgs.lib) composeExtensions foldl';
 
-  shell_ = maybeImport shell;
+  shell = shell';
+
+  overlays = overlays' ++ [ overlay' ];
+
+  overlay = foldl' composeExtensions overlay' overlays';
+
 
   outputs = lib.eachSystem systems (system:
     let
@@ -49,7 +58,10 @@ let
           ;
       };
 
-      packages = pkgs.${name} or { };
+      inherit (nixpkgs.lib) optionalAttrs;
+      inherit (pkgs) callPackage callPackages;
+
+      packages = pkgs.callPackages packages' {};
     in
     {
       legacyPackages = packages;
@@ -58,18 +70,16 @@ let
       packages = lib.flattenTree packages;
     }
     //
-    (
-      if packages ? defaultPackage then {
-        defaultPackage = packages.defaultPackage;
-      } else { }
-    )
+    (optionalAttrs (packages ? defaultPackage) {
+      inherit (packages) defaultPackage;
+    })
     //
     (
       if shell != null then {
-        devShell = shell_ { inherit pkgs; };
-      } else if packages ? devShell then {
-        devShell = packages.devShell;
-      } else { }
+        devShell = callPackage shell { };
+      } else optionalAttrs (packages ? devShell) {
+        inherit (packages) devShell;
+      }
     )
   );
 in
