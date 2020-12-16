@@ -26,6 +26,8 @@ in
 , #
   packages ? { pkgs }: pkgs.${name} or { }
 , #
+  hydraJobs ? packages
+, #
   lib ? {}
 }:
 let
@@ -47,6 +49,7 @@ let
   overlays' = map loadOverlay overlays;
   shell' = maybeImport shell;
   packages' = maybeImport packages;
+  hydraJobs' = maybeImport hydraJobs;
 in let
   shell = shell';
 
@@ -71,10 +74,11 @@ in let
     in
     {
       legacyPackages = packages;
-      hydraJobs = packages;
 
       # Flake expects a flat attrset containing only derivations as values
       packages = flattenTree packages;
+
+      hydraJobs = pkgs.callPackages hydraJobs' {};
     }
     //
     (optionalAttrs (packages ? defaultPackage) {
