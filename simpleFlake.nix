@@ -29,27 +29,25 @@ in
   lib ? {}
 }:
 let
-  loadOverlay = obj:
-    if obj == null then
-      [ ]
-    else
-      [ (maybeImport obj) ]
-  ;
+  inherit (nixpkgs.lib) composeExtensions foldl' pipe flip;
+
+  loadOverlay = flip pipe [
+    maybeImport
+    (obj: obj.overlay or obj)
+  ];
 
   maybeImport = obj: with builtins;
-    if (typeOf obj == "path") || (typeOf obj == "string") then
+    if (elem (typeOf obj) [ "path" "string" ]) then
       import obj
     else
       obj
   ;
 
-  overlay' = maybeImport overlay;
-  overlays' = map maybeImport overlays;
+  overlay' = loadOverlay overlay;
+  overlays' = map loadOverlay overlays;
   shell' = maybeImport shell;
   packages' = maybeImport packages;
 in let
-  inherit (nixpkgs.lib) composeExtensions foldl';
-
   shell = shell';
 
   overlays = overlays' ++ [ overlay' ];
