@@ -82,6 +82,8 @@ in let
         inherit (packages) devShell;
       }
     )
-  );
+  ) // {
+    inherit overlay;
+  };
 in
 outputs
