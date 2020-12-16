@@ -29,6 +29,8 @@ in
   hydraJobs ? packages
 , #
   lib ? {}
+, #
+  nixosModules ? {}
 }:
 let
   inherit (nixpkgs.lib) composeExtensions foldl' pipe flip;
@@ -93,7 +95,7 @@ in let
       }
     )
   ) // {
-    inherit overlay lib;
+    inherit overlay lib nixosModules;
   };
 in
 outputs
