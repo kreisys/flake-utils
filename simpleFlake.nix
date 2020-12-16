@@ -1,4 +1,10 @@
 { lib }:
+
+let
+  # Get what we need out of our own lib so we can reuse the name
+  # `lib` as an argument.
+  inherit (lib) defaultSystems eachSystem flattenTree;
+in
 # This function returns a flake outputs-compatible schema.
 { # pass an instance of the nixpkgs flake
   nixpkgs
@@ -16,9 +22,11 @@
 , # maps to the devShell output. Pass in a shell.nix file or function.
   shell ? null
 , # pass the list of supported systems
-  systems ? lib.defaultSystems
+  systems ? defaultSystems
 , #
   packages ? { pkgs }: pkgs.${name} or { }
+, #
+  lib ? {}
 }:
 let
   loadOverlay = obj:
@@ -28,8 +36,8 @@ let
       [ (maybeImport obj) ]
   ;
 
-  maybeImport = obj:
-    if (builtins.typeOf obj == "path") || (builtins.typeOf obj == "string") then
+  maybeImport = obj: with builtins;
+    if (typeOf obj == "path") || (typeOf obj == "string") then
       import obj
     else
       obj
@@ -48,8 +56,7 @@ in let
 
   overlay = foldl' composeExtensions overlay' overlays';
 
-
-  outputs = lib.eachSystem systems (system:
+  outputs = eachSystem systems (system:
     let
       pkgs = import nixpkgs {
         inherit
@@ -69,7 +76,7 @@ in let
       hydraJobs = packages;
 
       # Flake expects a flat attrset containing only derivations as values
-      packages = lib.flattenTree packages;
+      packages = flattenTree packages;
     }
     //
     (optionalAttrs (packages ? defaultPackage) {
@@ -84,7 +91,7 @@ in let
       }
     )
   ) // {
-    inherit overlay;
+    inherit overlay lib;
   };
 in
 outputs
