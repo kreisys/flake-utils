@@ -11,7 +11,8 @@
 , # pass either a function or a file
   overlay ? (_:_: {})
 , # use this to load other flakes overlays to supplement nixpkgs
-  overlays ? [ ]
+  preOverlays ? [ ]
+, overlays ? preOverlays
 , # maps to the devShell output. Pass in a shell.nix file or function.
   shell ? null
 , # pass the list of supported systems
