@@ -65,6 +65,7 @@ in let
     in
     {
       legacyPackages = packages;
+      hydraJobs = packages;
 
       # Flake expects a flat attrset containing only derivations as values
       packages = lib.flattenTree packages;
