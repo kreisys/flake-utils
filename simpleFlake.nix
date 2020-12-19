@@ -31,6 +31,7 @@ in
   lib ? {}
 , #
   nixosModules ? {}
+, nixosModule ? {}
 }:
 let
   inherit (nixpkgs.lib) composeExtensions foldl' pipe flip;
@@ -95,7 +96,7 @@ in let
       }
     )
   ) // {
-    inherit overlay lib nixosModules;
+    inherit overlay lib nixosModules nixosModule;
   };
 in
 outputs
