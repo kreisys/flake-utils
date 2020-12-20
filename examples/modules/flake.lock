@@ -1,0 +1,37 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1608333171,
+        "narHash": "sha256-F7xKXqzLH57Rv7vHojWh/ZTqN7wTBuODFcL9ZkWLXCo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1db8a438773d81fce7f6fee323669eda91edc821",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "utils": "utils"
+      }
+    },
+    "utils": {
+      "locked": {
+        "narHash": "sha256-3Bg4/XvT8N5D/aqJYzaiOfGKXoOG0j8qooWdzIWvSxQ=",
+        "path": "/Users/kreisys/Werk/kreisys/flake-utils",
+        "type": "path"
+      },
+      "original": {
+        "path": "/Users/kreisys/Werk/kreisys/flake-utils",
+        "type": "path"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
