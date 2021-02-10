@@ -16,18 +16,18 @@ in
   preOverlays ? [ ]
 , overlays ? preOverlays
 , # maps to the devShell output. Pass in a shell.nix file or function.
-  shell ? null
+  devShell ? null
+, shell ? devShell
 , # pass the list of supported systems
   systems ? defaultSystems
 , #
-  packages ? { pkgs }: pkgs.${name} or { }
+  packages ? null
 , #
-  hydraJobs ? packages
+  hydraJobs ? null
 , #
-  lib ? {}
+  lib ? null
 , #
-  nixosModules ? {}
-, nixosModule ? {}
+  nixosModules ? null
 }:
 let
   inherit (nixpkgs.lib) composeExtensions foldl' pipe flip;
@@ -49,6 +49,8 @@ let
   shell' = maybeImport shell;
   packages' = maybeImport packages;
   hydraJobs' = maybeImport hydraJobs;
+  lib' = maybeImport lib;
+  nixosModules' = maybeImport nixosModules;
 in let
   shell = shell';
 
@@ -69,30 +71,35 @@ in let
       inherit (nixpkgs.lib) optionalAttrs;
       inherit (pkgs) callPackage callPackages;
 
-      packages = pkgs.callPackages packages' {};
     in
-    {
-      legacyPackages = packages;
+    (optionalAttrs (packages' != null) (let
+      packages = callPackages packages' {};
+      sanitizedPackages = removeAttrs packages [ "defaultPackage" "devShell" ];
+    in {
+      legacyPackages = sanitizedPackages;
 
       # Flake expects a flat attrset containing only derivations as values
-      packages = flattenTree packages;
-
-      hydraJobs = pkgs.callPackages hydraJobs' {};
-    }
-    //
-    (optionalAttrs (packages ? defaultPackage) {
+      packages = flattenTree sanitizedPackages;
+    } // (optionalAttrs (packages ? defaultPackage) {
       inherit (packages) defaultPackage;
+    }) // (if shell != null then {
+      devShell = callPackage shell { };
+    } else optionalAttrs (packages ? devShell) {
+      inherit (packages) devShell;
+    })))
+    //
+    (optionalAttrs (hydraJobs' != null) {
+      hydraJobs = callPackages hydraJobs' {};
     })
     //
-    (
-      if shell != null then {
-        devShell = callPackage shell { };
-      } else optionalAttrs (packages ? devShell) {
-        inherit (packages) devShell;
-      }
-    )
-  ) // {
-    inherit overlay lib nixosModules nixosModule;
-  };
+    (optionalAttrs (lib' != null) {
+      lib = lib';
+    })
+    // (optionalAttrs (nixosModules' != null) {
+      nixosModules = nixosModules';
+    }))
+    // {
+      inherit overlay;
+    };
 in
 outputs
