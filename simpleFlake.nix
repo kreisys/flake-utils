@@ -8,10 +8,6 @@ in
 # This function returns a flake outputs-compatible schema.
 { # pass an instance of the nixpkgs flake
   nixpkgs
-, # we assume that the name maps to the project name, and also that the
-  # overlay has an attribute with the `name` prefix that contains all of the
-  # project's packages.
-  name
 , # nixpkgs config
   config ? { }
 , # pass either a function or a file
