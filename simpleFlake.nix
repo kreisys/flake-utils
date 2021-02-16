@@ -10,6 +10,8 @@ in
   nixpkgs
 , # nixpkgs config
   config ? { }
+, # ignored
+  name ? null
 , # pass either a function or a file
   overlay ? (_:_: {})
 , # use this to load other flakes overlays to supplement nixpkgs
